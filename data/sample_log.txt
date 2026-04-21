@@ -1,0 +1,10 @@
+
+    2026-04-21 14:30:00 EventID=4624 Account=SYSTEM LogonType=3
+    2026-04-21 14:31:15 EventID=4688 ProcessName=cmd.exe ParentProcess=winword.exe
+    2026-04-21 14:31:16 EventID=4688 ProcessName=powershell.exe ParentProcess=cmd.exe
+    2026-04-21 14:32:00 EventID=4698 TaskName=WindowsUpdate ScheduledBy=UNKNOWN
+    2026-04-21 14:33:10 EventID=4625 Account=Administrator FailureReason=WrongPassword
+    2026-04-21 14:33:11 EventID=4625 Account=Administrator FailureReason=WrongPassword
+    2026-04-21 14:33:12 EventID=4625 Account=Administrator FailureReason=WrongPassword
+    2026-04-21 14:33:13 EventID=4624 Account=Administrator LogonType=3
+    

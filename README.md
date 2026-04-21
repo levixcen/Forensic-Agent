@@ -1,9 +1,8 @@
-# Forensic AI Agent
+# LogIQ
 
-An AI-powered post-incident forensic reconstruction agent that ingests 
-Windows Event Logs, autonomously reasons through attack sequences, maps 
-findings to the MITRE ATT&CK framework, and generates structured 
-investigation reports using Azure OpenAI.
+An AI-powered post-incident forensic reconstruction agent that ingests Windows Event Logs, 
+autonomously reasons through attack sequences, maps findings to the MITRE ATT&CK framework, 
+and generates structured investigation reports using Azure OpenAI.
 
 ## Problem
 Post-incident forensic investigation is done manually by senior experts 
