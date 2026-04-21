@@ -26,7 +26,6 @@ structured report any analyst can use or hand to a client.
 See docs/architecture.md
 
 ## How to Run
-(fill this in as you build)
+
 
 ## Risk and Safety
-(fill this in on Day 6)
