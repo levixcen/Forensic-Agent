@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogIQ - Forensic AI Agent</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0f1623;
+            color: #B5D4F4;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.4rem;
+        }
+        .container { width: 100%; max-width: 816px; }
+        .header {
+            text-align: center;
+            margin-bottom: 2.4rem;
+            padding-bottom: 1.8rem;
+            border-bottom: 0.5px solid #378ADD;
+        }
+        .header h1 {
+            font-family: 'Courier New', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #85B7EB;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.6rem;
+        }
+        .header p {
+            font-size: 15.6px;
+            color: #378ADD;
+            letter-spacing: 0.08em;
+        }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 0.9rem;
+        }
+        .badge {
+            font-size: 13px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        .badge-blue { background: #185FA5; color: #B5D4F4; }
+        .badge-purple { background: #534AB7; color: #EEEDFE; }
+        .upload-section {
+            border: 0.5px dashed #378ADD;
+            border-radius: 12px;
+            padding: 2.4rem;
+            text-align: center;
+            margin-bottom: 1.8rem;
+            background: #0a1020;
+        }
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1.2rem;
+            border: 1px solid #378ADD;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #85B7EB;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .upload-section p { font-size: 16px; color: #B5D4F4; margin-bottom: 0.6rem; }
+        .upload-section small { font-size: 14px; color: #378ADD; display: block; margin-bottom: 1.5rem; }
+        input[type="file"] { display: none; }
+        .upload-label {
+            display: inline-block;
+            padding: 0.75rem 1.8rem;
+            border: 1px solid #378ADD;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #85B7EB;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .upload-label:hover { background: #378ADD; color: #0a1020; }
+        .filename { font-size: 14px; color: #85B7EB; margin-top: 0.9rem; }
+        .steps-section {
+            background: #0a1020;
+            border: 1px solid #378ADD;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .steps-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .steps-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #7F77DD;
+        }
+        .steps-label {
+            font-size: 14px;
+            color: #AFA9EC;
+            letter-spacing: 0.08em;
+            font-family: 'Courier New', monospace;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            padding: 6px 0;
+            font-family: 'Courier New', monospace;
+            transition: color 0.3s;
+        }
+        .step-num { color: #378ADD; min-width: 24px; font-weight: 700; }
+        .step-text { color: #378ADD; }
+        .step.active .step-text { color: #B5D4F4; }
+        .step.active .step-num { color: #85B7EB; }
+        .step.done .step-text { color: #1D9E75; }
+        .step.done .step-num { color: #1D9E75; }
+        .analyze-btn {
+            width: 100%;
+            padding: 1.1rem;
+            background: transparent;
+            border: 1px solid #378ADD;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #85B7EB;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+            margin-bottom: 1.8rem;
+        }
+        .analyze-btn:hover:not(:disabled) { background: #378ADD; color: #0a1020; }
+        .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .report-section { display: none; }
+        .report-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.9rem;
+        }
+        .report-label {
+            font-size: 14px;
+            color: #AFA9EC;
+            letter-spacing: 0.08em;
+            font-family: 'Courier New', monospace;
+        }
+        .report-content {
+            background: #0a1020;
+            border: 1px solid #378ADD;
+            border-radius: 12px;
+            padding: 1.8rem;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #B5D4F4;
+            font-family: 'Courier New', monospace;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .error-msg {
+            font-size: 14px;
+            color: #E24B4A;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 1.2rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>LogIQ</h1>
+            <p>AI-powered post-incident forensic reconstruction</p>
+            <div class="badges">
+                <span class="badge badge-blue">Blue Team</span>
+                <span class="badge badge-purple">DFIR</span>
+                <span class="badge badge-blue">MITRE ATT&CK</span>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-icon">^</div>
+            <p>Drop your log file here</p>
+            <small>.txt, .log, .evtx supported</small>
+            <label class="upload-label" for="logfile">Select file</label>
+            <input type="file" id="logfile" accept=".txt,.log,.evtx">
+            <div class="filename" id="filename"></div>
+        </div>
+
+        <div class="steps-section">
+            <div class="steps-header">
+                <div class="steps-dot"></div>
+                <span class="steps-label">ANALYSIS STEPS</span>
+            </div>
+            <div class="step" id="step1">
+                <span class="step-num">01</span>
+                <span class="step-text">Reading and chunking log file</span>
+            </div>
+            <div class="step" id="step2">
+                <span class="step-num">02</span>
+                <span class="step-text">Reasoning through event sequences</span>
+            </div>
+            <div class="step" id="step3">
+                <span class="step-num">03</span>
+                <span class="step-text">Mapping to MITRE ATT&CK framework</span>
+            </div>
+            <div class="step" id="step4">
+                <span class="step-num">04</span>
+                <span class="step-text">Generating forensic report</span>
+            </div>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <button class="analyze-btn" id="analyzeBtn" onclick="analyze()" disabled>
+            Run forensic analysis
+        </button>
+
+        <div class="report-section" id="reportSection">
+            <div class="report-header">
+                <div class="steps-dot"></div>
+                <span class="report-label">FORENSIC REPORT</span>
+            </div>
+            <div class="report-content" id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('logfile').addEventListener('change', function() {
+            const filename = this.files[0] ? this.files[0].name : '';
+            document.getElementById('filename').textContent = filename;
+            document.getElementById('analyzeBtn').disabled = !this.files[0];
+        });
+
+        function setStep(num) {
+            for(let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step' + i);
+                el.classList.remove('active', 'done');
+                if(i < num) el.classList.add('done');
+                if(i === num) el.classList.add('active');
+            }
+        }
+
+        async function analyze() {
+            const fileInput = document.getElementById('logfile');
+            const btn = document.getElementById('analyzeBtn');
+            const reportSection = document.getElementById('reportSection');
+            const reportContent = document.getElementById('reportContent');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if(!fileInput.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('logfile', fileInput.files[0]);
+
+            btn.disabled = true;
+            errorMsg.style.display = 'none';
+            reportSection.style.display = 'none';
+
+            setStep(1);
+            await new Promise(r => setTimeout(r, 800));
+            setStep(2);
+            await new Promise(r => setTimeout(r, 800));
+            setStep(3);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                setStep(4);
+                const data = await response.json();
+
+                if(data.error) {
+                    errorMsg.textContent = 'Error: ' + data.error;
+                    errorMsg.style.display = 'block';
+                } else {
+                    reportSection.style.display = 'block';
+                    reportContent.textContent = data.report;
+                }
+            } catch(err) {
+                errorMsg.textContent = 'Something went wrong. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
