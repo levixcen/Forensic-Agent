@@ -30,3 +30,22 @@ fills that gap.
 - Sort Azure access
 - Replace placeholder with real Azure OpenAI call
 - Test agent with sample log file
+
+## Day 3 - April 28 2026
+
+**What I did today:**
+- Set up Azure OpenAI resource (logiq-openai) in Korea Central
+- Deployed GPT-4o model via Azure AI Foundry
+- Replaced placeholder with real Azure OpenAI API call
+- Successfully tested agent producing a full forensic report
+- Agent correctly identified MITRE ATT&CK techniques T1059.003, 
+  T1059.001, T1053.005, and T1110 from sample logs
+
+**What the agent produced:**
+A complete forensic report including executive summary, attack timeline, 
+MITRE ATT&CK mapping, plain language narrative, and recommended next steps.
+
+
+**Tomorrow:**
+- Build Flask web UI so users can upload a log file and receive the report
+- Deploy to Azure App Service
