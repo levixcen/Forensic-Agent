@@ -4,58 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogIQ | AI Forensics</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@100;400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #1a1d23; color: #B5D4F4; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .navbar { padding: 0.8rem 2rem; border-bottom: 1px solid #378ADD; display: flex; align-items: center; justify-content: space-between; background: #121417; z-index: 10; }
-        .logo { font-family: 'Public Sans', sans-serif; font-size: 1.6rem; letter-spacing: 0.02em; color: #FFFFFF; display: flex; align-items: center; }
-        .logo .light { font-weight: 100; color: #85B7EB; }
-        .logo .bold { font-weight: 400; color: #FFFFFF; margin-left: 1px; }
-        .tagline { font-size: 10px; color: #378ADD; letter-spacing: 0.15em; font-weight: 600; }
+        body { font-family: 'Inter', sans-serif; background: #080d14; color: #B5D4F4; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .navbar { padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; background: #080d14; border-bottom: 1px solid #0C447C; }
+        .logo { font-family: 'Press Start 2P', monospace; font-size: 1.1rem; color: #378ADD; letter-spacing: 0.08em; font-weight: 100; }
+        .tagline { font-size: 9px; color: #0C447C; letter-spacing: 0.2em; font-weight: 600; font-family: 'Inter', sans-serif; }
         .chat-container { flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; max-width: 900px; margin: 0 auto; width: 100%; }
-        .message { max-width: 85%; padding: 1rem 1.5rem; border-radius: 12px; line-height: 1.6; font-size: 14px; animation: fadeIn 0.3s ease; }
+        .message { max-width: 85%; padding: 1rem 1.5rem; border-radius: 4px; line-height: 1.6; font-size: 14px; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .system-msg { background: #121417; border: 1px solid #378ADD; align-self: flex-start; }
-        .user-msg { background: #185FA5; color: #FFFFFF; align-self: flex-end; border: 1px solid #85B7EB; }
-        .report-msg { background: #121417; border: 1px solid #FFFFFF; align-self: flex-start; font-family: 'Inter', sans-serif; width: 100%; max-width: 100%; }
+        .system-msg { background: #0d1825; align-self: flex-start; }
+        .user-msg { background: #0C447C; color: #B5D4F4; align-self: flex-end; }
+        .report-msg { background: #0d1825; align-self: flex-start; font-family: 'Inter', sans-serif; width: 100%; max-width: 100%; }
 
         .mitre-table, .timeline-table, .kv-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 12px; }
-        .mitre-table th, .timeline-table th { background: #185FA5; color: #FFFFFF; padding: 6px 10px; text-align: left; font-size: 10px; letter-spacing: 0.08em; border: 1px solid #378ADD; }
-        .mitre-table td, .timeline-table td { padding: 6px 10px; border: 1px solid #1e2530; color: #B5D4F4; vertical-align: middle; }
-        .mitre-table tr:nth-child(even) td, .timeline-table tr:nth-child(even) td { background: #0f1115; }
-        .mitre-table tr:nth-child(odd) td, .timeline-table tr:nth-child(odd) td { background: #121417; }
-        .technique-id { color: #AFA9EC; font-weight: 600; font-family: 'Courier New', monospace; }
-        .timestamp-cell { color: #85B7EB; font-family: 'Courier New', monospace; white-space: nowrap; }
-        .eventid-cell { color: #AFA9EC; font-weight: 600; font-family: 'Courier New', monospace; text-align: center; }
+        .mitre-table th, .timeline-table th { background: #0C447C; color: #B5D4F4; padding: 6px 10px; text-align: left; font-size: 10px; letter-spacing: 0.08em; }
+        .mitre-table td, .timeline-table td { padding: 6px 10px; color: #B5D4F4; vertical-align: middle; }
+        .mitre-table tr:nth-child(even) td, .timeline-table tr:nth-child(even) td { background: #080d14; }
+        .mitre-table tr:nth-child(odd) td, .timeline-table tr:nth-child(odd) td { background: #0d1825; }
+        .technique-id { color: #378ADD; font-weight: 600; font-family: 'Courier New', monospace; }
+        .timestamp-cell { color: #378ADD; font-family: 'Courier New', monospace; white-space: nowrap; }
+        .eventid-cell { color: #85B7EB; font-weight: 600; font-family: 'Courier New', monospace; text-align: center; }
         .severity-high { color: #FF6B6B; font-weight: 600; }
         .severity-medium { color: #FFB347; font-weight: 600; }
         .severity-low { color: #1D9E75; font-weight: 600; }
+        .kv-table td { padding: 5px 10px; vertical-align: top; }
+        .kv-table td:first-child { color: #378ADD; font-weight: 600; width: 200px; background: #080d14; white-space: nowrap; }
+        .kv-table td:last-child { color: #B5D4F4; background: #0d1825; }
 
-        .kv-table td { padding: 5px 10px; border: 1px solid #1e2530; vertical-align: top; }
-        .kv-table td:first-child { color: #378ADD; font-weight: 600; width: 200px; background: #0f1115; white-space: nowrap; }
-        .kv-table td:last-child { color: #B5D4F4; background: #121417; }
+        .streaming-text { color: #B5D4F4; font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; line-height: 1.6; }
+        .cursor { display: inline-block; width: 8px; height: 14px; background: #378ADD; animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 2px; }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        .download-btn { background: transparent; color: #378ADD; border: 1px solid #378ADD; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.08em; margin-top: 1rem; display: inline-block; }
-        .download-btn:hover { background: #378ADD; color: #121417; }
+        .report-actions { display: flex; gap: 8px; margin-top: 1rem; }
+        .download-btn { background: #0C447C; color: #B5D4F4; border: none; padding: 8px 16px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.08em; display: inline-block; }
+        .download-btn:hover { background: #185FA5; }
+        .copy-btn { background: transparent; color: #378ADD; border: 1px solid #0C447C; padding: 8px 16px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; letter-spacing: 0.08em; display: inline-block; }
+        .copy-btn:hover { background: #0d1825; }
+        .copy-btn.copied { color: #1D9E75; border-color: #1D9E75; }
 
-        .input-area { padding: 1rem 2rem 2.5rem; background: linear-gradient(transparent, #1a1d23 40%); }
-        .file-support-legend { max-width: 800px; margin: 0 auto 10px; font-size: 11px; color: #378ADD; display: flex; gap: 15px; justify-content: center; font-weight: 600; }
-        .format-tag { border: 1px solid #378ADD; padding: 2px 6px; border-radius: 4px; opacity: 0.8; }
-        .input-wrapper { max-width: 800px; margin: 0 auto; background: #121417; border: 1px solid #FFFFFF; border-radius: 24px; padding: 8px 16px; display: flex; align-items: center; gap: 12px; }
-        .file-label { color: #85B7EB; cursor: pointer; font-size: 24px; padding: 0 8px; }
+        .input-area { padding: 1rem 2rem 2.5rem; background: #080d14; }
+        .file-support-legend { max-width: 800px; margin: 0 auto 10px; font-size: 11px; color: #0C447C; display: flex; gap: 15px; justify-content: center; font-weight: 600; }
+        .format-tag { background: #0d1825; color: #378ADD; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .input-wrapper { max-width: 800px; margin: 0 auto; background: #0d1825; border-radius: 4px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+        .file-label { color: #378ADD; cursor: pointer; font-size: 24px; padding: 0 8px; }
         input[type="text"] { flex: 1; background: transparent; border: none; color: #B5D4F4; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; }
-        .send-btn { background: #378ADD; color: #121417; border: none; padding: 6px 16px; border-radius: 18px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .send-btn { background: #378ADD; color: #080d14; border: none; padding: 8px 20px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; }
+        .send-btn:hover { background: #85B7EB; }
         input[type="file"] { display: none; }
-        .step-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #378ADD; margin-bottom: 4px; }
-        .dot { width: 6px; height: 6px; border-radius: 50%; background: #378ADD; }
+        .step-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #0C447C; margin-bottom: 4px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: #0C447C; }
         .done { color: #1D9E75; }
         .done .dot { background: #1D9E75; }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><span class="light">Log</span><span class="bold">IQ</span></div>
+        <div class="logo"><span style="color:#ffffff; text-shadow: 0 0 4px rgba(255,255,255,0.4), 0 0 10px rgba(255,255,255,0.2);">Log</span><span>IQ</span></div>
         <div class="tagline">BLUE TEAM FORENSICS</div>
     </nav>
 
@@ -66,27 +72,31 @@
     <div class="input-area">
         <div class="file-support-legend" id="supportLegend">
             <span>Supported:</span>
-            <span class="format-tag">.LOG</span>
             <span class="format-tag">.TXT</span>
+            <span class="format-tag">.LOG</span>
+            <span class="format-tag">.EVTX</span>
+            <span class="format-tag">.XML</span>
+            <span class="format-tag">.CSV</span>
+            <span class="format-tag">.JSON</span>
         </div>
         <div class="input-wrapper">
             <label class="file-label" for="logfile" id="fileIcon">+</label>
-            <input type="file" id="logfile">
+            <input type="file" id="logfile" accept=".txt,.log,.evtx,.xml,.csv,.json">
             <input type="text" id="userInput" placeholder="Upload a file..." readonly>
             <button class="send-btn" id="sendBtn" onclick="handleInteraction()" disabled>Analyze</button>
         </div>
     </div>
 
     <script>
-        const logInput = document.getElementById('logfile');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
+        const logInput     = document.getElementById('logfile');
+        const userInput    = document.getElementById('userInput');
+        const sendBtn      = document.getElementById('sendBtn');
         const chatContainer = document.getElementById('chatContainer');
-        const fileIcon = document.getElementById('fileIcon');
+        const fileIcon     = document.getElementById('fileIcon');
         const supportLegend = document.getElementById('supportLegend');
 
         let analysisComplete = false;
-        let currentReport = '';
+        let currentReport = '';   // always holds the raw text from the last completed analysis
 
         logInput.addEventListener('change', () => {
             if (logInput.files[0]) {
@@ -112,15 +122,19 @@
 
         function stripMarkdown(text) {
             return text
-                .replace(/\*\*(.+?)\*\*/g, '$1')
-                .replace(/\*(.+?)\*/g, '$1')
-                .replace(/`(.+?)`/g, '$1')
-                .replace(/#+\s/g, '');
+                .replace(/\*\*(.+?)\*\*/gs, '$1')   // bold — multiline safe
+                .replace(/\*(.+?)\*/gs, '$1')        // italic
+                .replace(/`(.+?)`/gs, '$1')          // inline code
+                .replace(/#+\s+/g, '')               // headings
+                .replace(/^-{3,}\s*$/gm, '')         // --- horizontal rules
+                .replace(/\*+\s*$/gm, '')            // trailing asterisks on any line
+                .replace(/^\*+/gm, '')               // leading asterisks on any line
+                .replace(/_{2,}/g, '');              // stray underscores
         }
 
         function severityClass(s) {
             if (!s) return '';
-            if (s.toLowerCase().includes('high')) return 'severity-high';
+            if (s.toLowerCase().includes('high'))   return 'severity-high';
             if (s.toLowerCase().includes('medium')) return 'severity-medium';
             return 'severity-low';
         }
@@ -134,42 +148,80 @@
         }
 
         function buildTimelineTable(lines) {
-            let html = '<table class="timeline-table"><thead><tr><th>TIMESTAMP</th><th>EVENT ID</th><th>DESCRIPTION</th></tr></thead><tbody>';
-            lines.forEach(line => {
-                const clean = line.replace(/^\d+\.\s*/, '').trim();
-                if (!clean || !clean.includes('|')) return;
-                const cells = clean.split('|').map(c => c.trim()).filter(Boolean);
-                if (cells.length >= 2) {
-                    const ts = cells[0];
-                    const evid = cells[1];
-                    const desc = cells[2] || '';
-                    html += `<tr>
-                        <td class="timestamp-cell">${ts}</td>
-                        <td class="eventid-cell">${evid}</td>
-                        <td>${desc}</td>
-                    </tr>`;
+            // Separate pipe-formatted rows from prose/bullet lines
+            const pipeLines  = lines.filter(l => l.includes('|') && !/^\|[\s\-:]+\|/.test(l.trim()));
+            const proseLines = lines.filter(l => !l.includes('|'));
+
+            if (pipeLines.length > 0) {
+                let html = '<table class="timeline-table"><thead><tr><th>TIMESTAMP</th><th>EVENT ID</th><th>DESCRIPTION</th></tr></thead><tbody>';
+                pipeLines.forEach(line => {
+                    const clean = line.replace(/^\d+\.\s*/, '').trim();
+                    const cells = clean.split('|').map(c => c.trim()).filter(Boolean);
+                    if (cells.length >= 2) {
+                        html += `<tr><td class="timestamp-cell">${cells[0]}</td><td class="eventid-cell">${cells[1]}</td><td>${cells[2] || ''}</td></tr>`;
+                    }
+                });
+                html += '</tbody></table>';
+                return html;
+            }
+
+            // Fallback: prose bullets — render as single-column timeline list
+            let html = '<div style="font-size:12px;">';
+            proseLines.forEach(line => {
+                const t = line.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').trim();
+                if (!t) return;
+                // Try to detect a leading timestamp (anything before first space-dash or comma)
+                const tsPat = t.match(/^(\d{4}-\d{2}-\d{2}[\sT]\d{2}:\d{2}(?::\d{2})?(?:\s*UTC)?)\s+(.+)/);
+                if (tsPat) {
+                    html += `<div style="display:flex;gap:12px;margin-bottom:6px;line-height:1.6;"><span class="timestamp-cell" style="min-width:160px;flex-shrink:0;">${tsPat[1]}</span><span style="color:#B5D4F4;">${tsPat[2]}</span></div>`;
+                } else {
+                    html += `<div style="display:flex;gap:8px;margin-bottom:6px;"><span style="color:#378ADD;min-width:12px;">•</span><span style="color:#B5D4F4;line-height:1.6;">${t}</span></div>`;
                 }
             });
-            html += '</tbody></table>';
+            html += '</div>';
             return html;
         }
 
         function buildMitreTable(lines) {
-            let html = '<table class="mitre-table"><thead><tr><th>TACTIC</th><th>TECHNIQUE ID</th><th>TECHNIQUE NAME</th><th>SEVERITY</th></tr></thead><tbody>';
-            lines.forEach(line => {
-                const clean = line.replace(/^\d+\.\s*/, '').trim();
-                if (!clean || !clean.includes('|')) return;
-                const cells = clean.split('|').map(c => c.trim()).filter(Boolean);
-                if (cells.length >= 3) {
-                    const sev = cells[3] || cells[cells.length - 1];
-                    html += `<tr>
-                        <td>${cells[0]}</td>
-                        <td class="technique-id">${cells[1]}</td>
-                        <td>${cells[2]}</td>
-                        <td class="${severityClass(sev)}">${sev}</td>
-                    </tr>`;
-                }
+            // Skip header/separator rows the LLM sometimes repeats
+            const dataLines = lines.filter(l => {
+                const t = l.trim();
+                if (!t) return false;
+                if (/^\|[\s\-:]+\|/.test(t)) return false;        // markdown separator
+                if (/^[\|]?\s*Tactic\s*[\|]/i.test(t)) return false; // header repeat
+                return true;
             });
+
+            const pipeLines  = dataLines.filter(l => l.includes('|'));
+            const proseLines = dataLines.filter(l => !l.includes('|'));
+
+            let html = '<table class="mitre-table"><thead><tr><th>TACTIC</th><th>TECHNIQUE ID</th><th>TECHNIQUE NAME</th><th>SEVERITY</th></tr></thead><tbody>';
+
+            if (pipeLines.length > 0) {
+                pipeLines.forEach(line => {
+                    const cells = line.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+                    if (cells.length >= 3) {
+                        const sev = cells[3] || '';
+                        html += `<tr><td>${cells[0]}</td><td class="technique-id">${cells[1]}</td><td>${cells[2]}</td><td class="${severityClass(sev)}">${sev}</td></tr>`;
+                    }
+                });
+            } else {
+                // Fallback: prose lines like "Initial Access  Valid Accounts  T1078  Stolen credentials..."
+                proseLines.forEach(line => {
+                    const t = line.replace(/^\d+\.\s*/, '').trim();
+                    if (!t) return;
+                    // Try tab or multi-space split
+                    const parts = t.split(/\t|  {2,}/).map(p => p.trim()).filter(Boolean);
+                    if (parts.length >= 3) {
+                        const sev = parts[3] || '';
+                        html += `<tr><td>${parts[0]}</td><td class="technique-id">${parts[1]}</td><td>${parts[2]}</td><td class="${severityClass(sev)}">${sev}</td></tr>`;
+                    } else {
+                        // Last resort: one full line as description
+                        html += `<tr><td colspan="4" style="color:#B5D4F4;">${t}</td></tr>`;
+                    }
+                });
+            }
+
             html += '</tbody></table>';
             return html;
         }
@@ -181,9 +233,7 @@
                 if (!trimmed) return;
                 const colon = trimmed.indexOf(':');
                 if (colon > 0 && colon < 45) {
-                    const key = trimmed.substring(0, colon).trim();
-                    const val = trimmed.substring(colon + 1).trim();
-                    html += `<tr><td>${key}</td><td>${val}</td></tr>`;
+                    html += `<tr><td>${trimmed.substring(0, colon).trim()}</td><td>${trimmed.substring(colon + 1).trim()}</td></tr>`;
                 } else {
                     html += `<tr><td colspan="2" style="color:#B5D4F4;">${trimmed}</td></tr>`;
                 }
@@ -194,15 +244,15 @@
 
         function formatReport(text) {
             const clean = stripMarkdown(text);
-            const kvSections = ['WHAT HAPPENED AND WHEN', 'WHAT WAS THE ROOT CAUSE', 'WHAT WAS AND REMAINS TO BE DONE', 'LESSONS LEARNED'];
-            const mitreSections = ['MITRE ATT&CK MAPPING'];
+            const kvSections       = ['WHAT HAPPENED AND WHEN', 'WHAT WAS THE ROOT CAUSE', 'WHAT WAS AND REMAINS TO BE DONE', 'LESSONS LEARNED'];
+            const mitreSections    = ['MITRE ATT&CK MAPPING'];
             const timelineSections = ['ATTACK TIMELINE'];
-            const allSections = [...kvSections, ...mitreSections, ...timelineSections, 'RECOMMENDED NEXT STEPS', 'ANALYST NOTES'];
-            const metaFields = ['CLASSIFICATION', 'REPORT ID', 'DATE', 'ANALYST'];
+            const allSections      = [...kvSections, ...mitreSections, ...timelineSections, 'RECOMMENDED NEXT STEPS', 'ANALYST NOTES', 'EXECUTIVE SUMMARY', 'NARRATIVE'];
+            const metaFields       = ['CLASSIFICATION', 'REPORT ID', 'DATE', 'ANALYST'];
 
             let lines = clean.split('\n');
-            let html = '<span style="color:#378ADD;font-weight:700;font-size:13px;margin-bottom:1rem;border-bottom:1px solid #185FA5;display:block;padding-bottom:4px;">FORENSIC REPORT</span>';
-            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin-bottom:1.2rem;padding-bottom:0.8rem;border-bottom:1px solid #185FA5;font-size:12px;">';
+            let html = '<div style="font-family:Press Start 2P,monospace;font-size:10px;color:#378ADD;margin-bottom:1.2rem;padding-bottom:8px;border-bottom:1px solid #0C447C;">FORENSIC REPORT</div>';
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin-bottom:1.2rem;padding-bottom:0.8rem;border-bottom:1px solid #0C447C;font-size:12px;">';
 
             let metaHtml = '';
             let bodyLines = [];
@@ -214,9 +264,7 @@
                 const isMetaField = metaFields.some(f => trimmed.startsWith(f + ':'));
                 if (isMetaField && inMeta) {
                     const colon = trimmed.indexOf(':');
-                    const key = trimmed.substring(0, colon).trim();
-                    const value = trimmed.substring(colon + 1).trim();
-                    metaHtml += `<div><span style="color:#378ADD;font-size:10px;letter-spacing:0.1em;">${key}</span><div style="color:#FFFFFF;margin-top:2px;">${value}</div></div>`;
+                    metaHtml += `<div style="margin-bottom:8px;"><div style="color:#0C447C;font-size:10px;letter-spacing:0.1em;margin-bottom:2px;">${trimmed.substring(0, colon).trim()}</div><div style="color:#B5D4F4;">${trimmed.substring(colon + 1).trim()}</div></div>`;
                 } else {
                     inMeta = false;
                     bodyLines.push(trimmed);
@@ -238,8 +286,7 @@
                     const firstNewline = part.indexOf('\n');
                     const content = firstNewline > -1 ? part.substring(firstNewline).trim() : '';
                     html += `<div style="margin-bottom:1.4rem;">`;
-                    html += `<div style="color:#378ADD;font-size:10px;font-weight:700;letter-spacing:0.12em;border-bottom:1px solid #185FA5;padding-bottom:4px;margin-bottom:8px;">${matchedSection}</div>`;
-
+                    html += `<div style="color:#378ADD;font-size:10px;font-weight:700;letter-spacing:0.12em;padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid #0C447C;">${matchedSection}</div>`;
                     if (content) {
                         const contentLines = content.split('\n').filter(l => l.trim());
                         if (timelineSections.includes(matchedSection)) {
@@ -252,9 +299,9 @@
                             contentLines.forEach(l => {
                                 const t = l.trim();
                                 if (t.match(/^\d+\./)) {
-                                    html += `<div style="display:flex;gap:8px;margin-bottom:4px;"><span style="color:#378ADD;min-width:18px;">${t.match(/^\d+/)[0]}.</span><span style="color:#B5D4F4;">${t.replace(/^\d+\./, '').trim()}</span></div>`;
+                                    html += `<div style="display:flex;gap:8px;margin-bottom:6px;"><span style="color:#378ADD;min-width:18px;">${t.match(/^\d+/)[0]}.</span><span style="color:#B5D4F4;line-height:1.7;">${t.replace(/^\d+\./, '').trim()}</span></div>`;
                                 } else {
-                                    html += `<p style="color:#B5D4F4;margin-bottom:4px;line-height:1.7;">${t}</p>`;
+                                    html += `<p style="color:#B5D4F4;margin-bottom:6px;line-height:1.7;">${t}</p>`;
                                 }
                             });
                         }
@@ -265,25 +312,64 @@
                 }
             });
 
-            html += `<button class="download-btn" onclick="downloadReport()">DOWNLOAD REPORT (.DOCX)</button>`;
+            // Action buttons — use data attributes so there's no ambiguity about which function runs
+            html += `
+                <div class="report-actions">
+                    <button class="download-btn" id="dlBtn">DOWNLOAD REPORT</button>
+                    <button class="copy-btn" id="copyBtn">COPY TEXT</button>
+                </div>`;
             return html;
         }
 
+        // -----------------------------------------------------------------------
+        // Download — reads from the module-level currentReport variable directly.
+        // There is exactly ONE definition of this function.
+        // -----------------------------------------------------------------------
         function downloadReport() {
+            if (!currentReport) {
+                alert('No report available to download.');
+                return;
+            }
             fetch('/download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ report: currentReport })
             })
-            .then(res => res.blob())
+            .then(res => {
+                if (!res.ok) return res.json().then(e => { throw new Error(e.error || res.statusText); });
+                return res.blob();
+            })
             .then(blob => {
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
+                const a   = document.createElement('a');
+                a.href     = url;
                 a.download = 'LogIQ_Forensic_Report.docx';
+                document.body.appendChild(a);
                 a.click();
+                a.remove();
                 URL.revokeObjectURL(url);
+            })
+            .catch(err => alert('Download failed: ' + err.message));
+        }
+
+        // -----------------------------------------------------------------------
+        // Copy raw report text to clipboard
+        // -----------------------------------------------------------------------
+        function copyReport(btn) {
+            if (!currentReport) return;
+            navigator.clipboard.writeText(currentReport).then(() => {
+                btn.textContent = 'COPIED ✓';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'COPY TEXT'; btn.classList.remove('copied'); }, 2000);
             });
+        }
+
+        // Wire up buttons after formatReport injects them into the DOM
+        function attachReportButtons(container) {
+            const dl   = container.querySelector('#dlBtn');
+            const copy = container.querySelector('#copyBtn');
+            if (dl)   dl.addEventListener('click', downloadReport);
+            if (copy) copy.addEventListener('click', () => copyReport(copy));
         }
 
         async function handleInteraction() {
@@ -304,7 +390,7 @@
                     const data = await response.json();
                     thinking.remove();
                     if (data.error) { addMessage('Error: ' + data.error, 'system-msg'); }
-                    else { addMessage(formatChatResponse(data.response), 'system-msg'); }
+                    else            { addMessage(formatChatResponse(data.response), 'system-msg'); }
                 } catch (err) {
                     thinking.remove();
                     addMessage('Something went wrong. Please try again.', 'system-msg');
@@ -315,7 +401,8 @@
         async function runForensicAnalysis() {
             sendBtn.disabled = true;
             addMessage(`Source file: <b>${logInput.files[0].name}</b>`, 'user-msg');
-            addMessage(`
+
+            const stepsMsg = addMessage(`
                 <div class="step-item" id="s1"><div class="dot"></div> Normalizing log data...</div>
                 <div class="step-item" id="s2"><div class="dot"></div> Heuristic timeline analysis...</div>
                 <div class="step-item" id="s3"><div class="dot"></div> Finalizing MITRE mapping...</div>
@@ -329,13 +416,60 @@
             await new Promise(r => setTimeout(r, 800));
             document.getElementById('s2').classList.add('done');
 
+            const streamingDiv = addMessage('', 'report-msg');
+            const streamingPre = document.createElement('div');
+            streamingPre.className = 'streaming-text';
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            streamingDiv.appendChild(streamingPre);
+            streamingDiv.appendChild(cursor);
+
+            let rawText = '';
+
             try {
                 const response = await fetch('/analyze', { method: 'POST', body: formData });
                 document.getElementById('s3').classList.add('done');
-                const data = await response.json();
-                if (data.error) { addMessage('Error: ' + data.error, 'system-msg'); sendBtn.disabled = false; return; }
-                currentReport = data.report;
-                addMessage(formatReport(data.report), 'report-msg');
+
+                const reader  = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let streamDone = false;
+
+                while (!streamDone) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();   // keep incomplete last line
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const parsed = JSON.parse(line.slice(6));
+                            if (parsed.error) {
+                                cursor.remove();
+                                streamingPre.textContent = 'Error: ' + parsed.error;
+                                streamDone = true;
+                                break;
+                            }
+                            if (parsed.done) {
+                                cursor.remove();
+                                currentReport = rawText;
+                                streamingDiv.innerHTML = formatReport(rawText);
+                                attachReportButtons(streamingDiv);   // wire up the two buttons
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                                streamDone = true;
+                                break;
+                            }
+                            if (parsed.token) {
+                                rawText += parsed.token;
+                                streamingPre.textContent = rawText;
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                        } catch (e) { /* malformed SSE frame — skip */ }
+                    }
+                }
             } catch (err) {
                 addMessage('Something went wrong. Please try again.', 'system-msg');
                 sendBtn.disabled = false;

@@ -1,6 +1,6 @@
 import os
-import hashlib
-import datetime
+import asyncio
+import re
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 
@@ -12,115 +12,189 @@ client = AzureOpenAI(
     api_version="2024-12-01-preview"
 )
 
+SUSPICIOUS_EVENT_IDS = {
+    '4624', '4625', '4626', '4627', '4648', '4649',
+    '4688', '4689', '4697', '4698', '4699', '4700',
+    '4701', '4702', '4720', '4722', '4724', '4728',
+    '4732', '4756', '4768', '4769', '4776', '4778',
+    '4779', '4794', '4798', '4799', '7045', '1102',
+    '4663', '4670', '4672', '4673', '4674', '4675',
+}
+
 def read_log_file(filepath):
-    with open(filepath, 'r') as f:
+    with open(filepath, 'r', errors='ignore') as f:
         return f.read()
 
-def chunk_logs(log_content, chunk_size=50):
+
+def smart_filter(log_content):
+    """
+    Filter log content to keep only lines/blocks containing suspicious Event IDs.
+
+    Handles three formats:
+      1. Plain text:  EventID=4688  or  Event ID: 4688
+      2. XML (EVTX-converted):  <EventID>4688</EventID>
+                                <EventID Qualifiers="">4688</EventID>
+      3. JSON:  "id":"4688"
+
+    For XML files the entire <Event>...</Event> block is treated as one unit
+    so that context (username, timestamp, process name) is preserved.
+    """
+    # --- Detect XML format ---
+    is_xml = bool(re.search(r'<Event\b', log_content, re.IGNORECASE))
+
+    if is_xml:
+        return _filter_xml_blocks(log_content)
+    else:
+        return _filter_plain_lines(log_content)
+
+
+def _filter_xml_blocks(log_content):
+    """Split on <Event> boundaries and keep blocks whose EventID is suspicious."""
+    # Split into individual <Event>…</Event> blocks
+    blocks = re.split(r'(?=<Event[\s>])', log_content)
+    total = len(blocks)
+    filtered = []
+
+    # Matches: <EventID>4688</EventID>  or  <EventID Qualifiers="...">4688</EventID>
+    xml_eid_pattern = re.compile(
+        r'<EventID[^>]*>\s*(\d+)\s*</EventID>', re.IGNORECASE
+    )
+
+    for block in blocks:
+        m = xml_eid_pattern.search(block)
+        if m and m.group(1) in SUSPICIOUS_EVENT_IDS:
+            filtered.append(block.strip())
+
+    if not filtered:
+        # Fallback: return all non-empty blocks
+        filtered = [b.strip() for b in blocks if b.strip()]
+
+    print(f"Smart filter (XML): {total} blocks -> {len(filtered)} suspicious blocks")
+    return filtered
+
+
+def _filter_plain_lines(log_content):
+    """Original line-based filter for plain text / key=value logs."""
     lines = log_content.strip().split('\n')
+    total = len(lines)
+    filtered = []
+
+    patterns = []
+    for eid in SUSPICIOUS_EVENT_IDS:
+        # Covers:  EventID=4688  EventId: 4688  "id":"4688"  id>4688
+        patterns.append(re.compile(
+            rf'(?:[Ee]vent\s*[Ii][Dd]|[Ii][Dd])[\s=:\>"]*{re.escape(eid)}\b'
+        ))
+
+    for line in lines:
+        if any(p.search(line) for p in patterns):
+            filtered.append(line)
+
+    if not filtered:
+        filtered = lines  # Fallback: keep everything
+
+    print(f"Smart filter (plain): {total} lines -> {len(filtered)} suspicious lines")
+    return filtered
+
+
+def chunk_logs(lines, chunk_size=200):
     chunks = []
     for i in range(0, len(lines), chunk_size):
-        chunks.append('\n'.join(lines[i:i+chunk_size]))
+        chunks.append('\n'.join(lines[i:i + chunk_size]))
     return chunks
 
-def call_azure_openai(prompt, max_tokens=1000):
+
+def call_azure_openai(prompt):
     response = client.chat.completions.create(
         model=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=max_tokens
+        max_tokens=1000
     )
     return response.choices[0].message.content
 
-def generate_report_id(log_filepath):
-    hash_input = (log_filepath + datetime.datetime.now().strftime('%Y%m%d')).encode()
-    return 'FR-2026-' + hashlib.md5(hash_input).hexdigest()[:4].upper()
 
 def build_analysis_prompt(log_chunk):
     return f"""
-    You are a senior digital forensic analyst. Analyze the following Windows
-    Event Log entries and reason through them step by step.
+You are a senior digital forensic analyst. Analyze the following Windows
+Event Log entries and reason through them step by step.
 
-    For each suspicious event you identify:
-    1. State the timestamp and Event ID
-    2. Explain what this event means in plain language
-    3. Identify the MITRE ATT&CK tactic and technique it maps to
-    4. Rate the severity as Low, Medium, or High
-    5. Explain your reasoning
+For each suspicious event you identify:
+1. State the timestamp and Event ID
+2. Explain what this event means in plain language
+3. Identify the MITRE ATT&CK tactic and technique it maps to
+4. Rate the severity as Low, Medium, or High
+5. Explain your reasoning
 
-    Log entries:
-    {log_chunk}
+Log entries:
+{log_chunk}
 
-    Think step by step. If an event is benign, say so and move on.
-    Only flag events that are genuinely suspicious.
-    """
+Think step by step. If an event is benign, say so and move on.
+Only flag events that are genuinely suspicious.
+"""
 
-def build_report_prompt(all_findings, report_id):
+
+def build_report_prompt(all_findings):
     return f"""
-    You are a senior digital forensic analyst writing a formal investigation report.
-    Based on the following findings, produce a structured report with exactly these sections.
-    Do not use markdown. No hashtags, no asterisks, no backticks.
-    Use plain text only with section headers exactly as shown in capitals.
+You are a senior forensic investigator at a top-tier SOC. Generate a high-fidelity SANS-style forensic report.
 
-    CLASSIFICATION: CONFIDENTIAL
-    REPORT ID: {report_id}
-    DATE: {datetime.datetime.now().strftime('%B %d, %Y')}
-    ANALYST: LogIQ Forensic AI Agent
+### FORMATTING RULES ###
+1. Use EXACTLY the headers below in all caps.
+2. Use professional, clinical language.
+3. Use Markdown tables for the MITRE ATT&CK MAPPING section.
+4. Use bold text for key indicators (IPs, File Names, Usernames).
+5. Use a chronological bulleted list for the ATTACK TIMELINE.
 
-    WHAT HAPPENED AND WHEN
+### REPORT START ###
 
-    Response Coordinator: LogIQ Forensic AI Agent
-    Nature of Incident: [1 sentence summary of the attack type]
-    When Did It Occur: [date, start time, end time, timezone from the logs]
-    IT Resources at Risk: [list affected systems, hostnames, accounts]
-    Business Processes Affected: [what business functions were disrupted]
-    Severity: [Critical / High / Medium / Low with one sentence justification]
-    Third Parties Involved: [external IPs, C2 servers, or none]
-    PII at Risk: [yes or no, describe what data may have been exposed]
-    Cybersecurity Risks: [identity theft, lateral movement, data loss, etc.]
-    Geographic Regions: [based on log hostnames and IPs]
-    Business Owners and Stakeholders: [affected accounts and system owners]
+WHAT HAPPENED AND WHEN
+[Summarize the incident clearly, including the scope and duration.]
 
-    WHAT WAS THE ROOT CAUSE
+WHAT WAS THE ROOT CAUSE
+[Explain the initial access vector and how the vulnerability was exploited.]
 
-    Cause of Incident: [how the attack started]
-    How Do We Know: [which log events prove this]
-    Confidence Level: [High / Medium / Low with reason]
-    Connections to Past Incidents: [none identified or relevant patterns]
+ATTACK TIMELINE
+[List events chronologically with timestamps in bold.]
 
-    ATTACK TIMELINE
-    List each event as a pipe-separated row in this exact format with no extra text:
-    TIMESTAMP | EVENT ID | DESCRIPTION
-    Example:
-    2026-04-15 08:14:32 UTC | 4688 | Malicious executable launched by cmd.exe
+MITRE ATT&CK MAPPING
+| Tactic | Technique | ID | Details |
+| :--- | :--- | :--- | :--- |
+| [Tactic Name] | [Technique] | [T-ID] | [Evidence from logs] |
 
-    MITRE ATT&CK MAPPING
-    List each finding as a pipe-separated row in this exact format:
-    TACTIC | TECHNIQUE ID | TECHNIQUE NAME | SEVERITY
-    Example:
-    Initial Access | T1566.001 | Spearphishing Attachment | High
+WHAT WAS AND REMAINS TO BE DONE
+[List containment and eradication steps taken or needed.]
 
-    WHAT WAS AND REMAINS TO BE DONE
+LESSONS LEARNED
+[Explain why the detection was delayed or how the attack bypassed security.]
 
-    Identification: [how the incident was detected]
-    Containment: [immediate steps to limit scope]
-    Eradication: [steps to remove attacker presence]
-    Recovery: [steps to restore normal operations]
+RECOMMENDED NEXT STEPS
+[Provide 3-5 actionable security hardening steps.]
 
-    LESSONS LEARNED
+ANALYST NOTES
+[Additional technical observations.]
 
-    People: [training or awareness improvements]
-    Process: [policy or procedure changes needed]
-    Technology: [tooling or monitoring improvements]
+### DATA TO PROCESS ###
+{all_findings}
+"""
 
-    RECOMMENDED NEXT STEPS
-    [Numbered list of prioritized actions with responsible party]
 
-    ANALYST NOTES
-    [Caveats, limitations of the analysis, areas needing human review]
+async def analyze_chunk_async(chunk, semaphore, idx, total):
+    async with semaphore:
+        print(f"  Analyzing chunk {idx + 1} of {total}...")
+        loop = asyncio.get_event_loop()
+        prompt = build_analysis_prompt(chunk)
+        finding = await loop.run_in_executor(None, call_azure_openai, prompt)
+        return finding
 
-    Findings to analyze:
-    {all_findings}
-    """
+
+async def analyze_all_chunks_async(chunks):
+    semaphore = asyncio.Semaphore(5)
+    tasks = [
+        analyze_chunk_async(chunk, semaphore, i, len(chunks))
+        for i, chunk in enumerate(chunks)
+    ]
+    findings = await asyncio.gather(*tasks)
+    return list(findings)
+
 
 def run_agent(log_filepath):
     print(f"Starting forensic analysis of: {log_filepath}")
@@ -128,29 +202,28 @@ def run_agent(log_filepath):
     print("Step 1: Reading log file...")
     log_content = read_log_file(log_filepath)
 
-    print("Step 2: Chunking logs for analysis...")
-    chunks = chunk_logs(log_content)
-    print(f"Log split into {len(chunks)} chunks")
+    print("Step 2: Smart filtering suspicious events...")
+    filtered_lines = smart_filter(log_content)
 
-    print("Step 3: Analyzing each chunk...")
-    all_findings = []
-    for i, chunk in enumerate(chunks):
-        print(f"  Analyzing chunk {i+1} of {len(chunks)}...")
-        prompt = build_analysis_prompt(chunk)
-        finding = call_azure_openai(prompt)
-        all_findings.append(finding)
+    print("Step 3: Chunking filtered logs...")
+    chunks = chunk_logs(filtered_lines, chunk_size=200)
+    print(f"Processing {len(chunks)} chunks in parallel...")
 
-    print("Step 4: Generating forensic report...")
-    report_id = generate_report_id(log_filepath)
-    report_prompt = build_report_prompt('\n\n'.join(all_findings), report_id)
-    final_report = call_azure_openai(report_prompt, max_tokens=4000)
+    print("Step 4: Analyzing chunks in parallel...")
+    all_findings = asyncio.run(analyze_all_chunks_async(chunks))
 
-    print("Step 5: Analysis complete.")
+    print("Step 5: Generating forensic report...")
+    combined = '\n\n'.join(all_findings)
+    report_prompt = build_report_prompt(combined)
+    final_report = call_azure_openai(report_prompt)
+
+    print("Step 6: Analysis complete.")
     return final_report
+
 
 if __name__ == "__main__":
     report = run_agent('data/sample_log.txt')
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("FORENSIC REPORT")
-    print("="*50)
+    print("=" * 50)
     print(report)

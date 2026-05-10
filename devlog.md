@@ -144,3 +144,25 @@ The one thing that did not change is the core idea. A junior analyst uploads
 a log file and gets back a senior-level forensic report. That was the goal on
 Day 1 and it is what LogIQ does today.
 
+## Final submission - May 10 2026 (Extended deadline)
+
+This is the very final submission before the extended deadline. No further changes after this commit.
+
+**What I did today:**
+- Added copy-to-clipboard button on the rendered report so analysts can paste raw report text directly
+- Fixed download report button which was silently broken due to a duplicate function definition overwriting the working one
+- Refined the UI — updated logo styling and tightened the overall layout
+- Fixed markdown artifact rendering bug where truncated LLM output left stray `**` characters visible in the report
+- Made the ATTACK TIMELINE and MITRE ATT&CK sections resilient to prose-formatted LLM output, adding fallback renderers when the model returns bullets instead of pipe-separated table rows
+- Fixed XML EventID parsing in the smart filter so EVTX-converted logs are correctly processed
+- Fixed SSE streaming headers to prevent proxy buffering silently dropping tokens on large files
+
+**State of the project at final submission:**
+- Agent reads plain text, key-value, and XML EVTX-converted logs
+- Smart filter detects format automatically and extracts suspicious Event IDs correctly in all three formats
+- Chunked parallel analysis via asyncio with concurrency limit of 5
+- Full SANS-style report renders in browser with structured sections, MITRE table, and timeline
+- Report is downloadable as a formatted DOCX with colored headers and tables
+- Report text is copyable in one click
+- Follow-up Q&A chat is grounded strictly in the generated report context
+- All known frontend rendering bugs resolved
